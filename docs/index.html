@@ -257,9 +257,9 @@
 
         <div class="card">
           <p class="section-label">Ingredients</p>
-          <div class="ing-head">
-            <span>Ingredient</span><span>Qty used (g)</span><span>Pack size (g)</span><span>Pack price (Rs)</span><span></span>
-          </div>
+          <div class="ing-head" style="grid-template-columns:1.8fr .8fr 1fr 1fr 1fr auto;">
+  <span>Ingredient</span><span>Unit</span><span>Qty used</span><span>Pack size</span><span>Pack price (Rs)</span><span></span>
+</div>
           <div class="ing-list" id="ingList"></div>
           <button class="btn btn-add" id="addIngBtn">+ Add ingredient</button>
         </div>
@@ -421,7 +421,7 @@ let idCounter = 1;
 function uid(){ return 'ing_' + (idCounter++) + '_' + Math.random().toString(36).slice(2,7); }
 
 function newIngredient(){
-  return { id: uid(), name:'', qty:'', packSize:'', packPrice:'' };
+  return { id: uid(), name:'', unit:'g', qty:'', packSize:'', packPrice:'' };
 }
 
 function addIngredient(data){
@@ -435,27 +435,29 @@ function renderIngredients(){
   ingredients.forEach(ing => {
     const row = document.createElement('div');
     row.className = 'ing-row';
+    row.style.gridTemplateColumns = '1.8fr .8fr 1fr 1fr 1fr auto';
+    const isPieces = ing.unit === 'pc';
+    const qtyPh = isPieces ? '2' : '250';
+    const packPh = isPieces ? '12' : '1000';
     row.innerHTML = `
       <input type="text" placeholder="e.g. Flour" value="${escapeHtml(ing.name)}" data-field="name" data-id="${ing.id}">
-      <input type="number" placeholder="250" min="0" step="any" value="${ing.qty}" data-field="qty" data-id="${ing.id}">
-      <input type="number" placeholder="1000" min="0" step="any" value="${ing.packSize}" data-field="packSize" data-id="${ing.id}">
+      <select data-field="unit" data-id="${ing.id}" style="width:100%; padding:7px 6px; font-family:'DM Mono',monospace; font-size:13px; border:1.5px solid var(--line); background:var(--flour); color:var(--espresso);">
+        <option value="g" ${ing.unit==='g'?'selected':''}>grams</option>
+        <option value="pc" ${ing.unit==='pc'?'selected':''}>pieces</option>
+      </select>
+      <input type="number" placeholder="${qtyPh}" min="0" step="any" value="${ing.qty}" data-field="qty" data-id="${ing.id}">
+      <input type="number" placeholder="${packPh}" min="0" step="any" value="${ing.packSize}" data-field="packSize" data-id="${ing.id}">
       <input type="number" placeholder="280" min="0" step="0.01" value="${ing.packPrice}" data-field="packPrice" data-id="${ing.id}">
       <button class="icon-btn" data-remove="${ing.id}" title="Remove">✕</button>
     `;
     list.appendChild(row);
   });
-  list.querySelectorAll('input').forEach(inp => {
+  list.querySelectorAll('input, select').forEach(inp => {
     inp.addEventListener('input', e => {
       const id = e.target.dataset.id, field = e.target.dataset.field;
       const ing = ingredients.find(i => i.id === id);
       if(ing) ing[field] = e.target.value;
-      calculate();
-    });
-  });
-  list.querySelectorAll('[data-remove]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      ingredients = ingredients.filter(i => i.id !== e.target.dataset.remove);
-      renderIngredients();
+      if(field === 'unit') renderIngredients();
       calculate();
     });
   });
@@ -928,6 +930,7 @@ document.getElementById('importFile').addEventListener('change', (e)=>{
 addIngredient({id:uid(), name:'Flour', qty:'250', packSize:'1000', packPrice:'220'});
 addIngredient({id:uid(), name:'Sugar', qty:'150', packSize:'1000', packPrice:'180'});
 addIngredient({id:uid(), name:'Butter', qty:'100', packSize:'250', packPrice:'450'});
+addIngredient({id:uid(), name:'Eggs', unit:'pc', qty:'2', packSize:'12', packPrice:'480'});
 calculate();
 renderSavedGrid();
 renderBookGrid();
