@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Batch Book — Recipe Costing</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --flour: #FBF6EF;
+    --flour-deep: #F3EBDD;
+    --espresso: #3A2E27;
+    --espresso-soft: #6B5D52;
+    --cinnamon: #B5482F;
+    --cinnamon-deep: #93381F;
+    --sage: #7A8B6F;
+    --sage-deep: #5E6E52;
+    --line: #E8DCC8;
+    --paper: #FFFDF9;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--flour);
+    color:var(--espresso);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{ max-width:1180px; margin:0 auto; padding:36px 24px 80px; }
+
+  /* Header */
+  header{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:32px; flex-wrap:wrap; gap:12px;
+    border-bottom:2px solid var(--espresso);
+    padding-bottom:20px;
+  }
+  .brand{ display:flex; align-items:baseline; gap:14px; }
+  .brand h1{
+    font-family:'Fraunces',serif; font-weight:600; font-optical-sizing:auto;
+    font-size:32px; margin:0; letter-spacing:-0.01em;
+  }
+  .brand .tag{
+    font-size:12.5px; color:var(--espresso-soft); font-style:italic;
+    font-family:'Fraunces',serif;
+  }
+  .header-actions{ display:flex; gap:10px; align-items:center; }
+
+  /* Tabs */
+  .tabs{ display:flex; gap:4px; margin-bottom:28px; }
+  .tab{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px;
+    padding:10px 18px; border:2px solid var(--espresso); background:transparent;
+    color:var(--espresso); cursor:pointer; border-radius:0;
+    text-transform:uppercase; letter-spacing:.04em;
+  }
+  .tab.active{ background:var(--espresso); color:var(--flour); }
+  .tab:not(.active):hover{ background:var(--flour-deep); }
+
+  /* Layout */
+  .grid{ display:grid; grid-template-columns:1.3fr 1fr; gap:28px; align-items:start; }
+  @media (max-width:880px){ .grid{ grid-template-columns:1fr; } }
+
+  .card{
+    background:var(--paper); border:1.5px solid var(--line);
+    padding:26px 26px 22px;
+  }
+  .card + .card{ margin-top:20px; }
+
+  .section-label{
+    font-family:'DM Mono',monospace; font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--sage-deep); font-weight:500;
+    margin:0 0 14px; display:flex; align-items:center; gap:8px;
+  }
+  .section-label::after{ content:''; flex:1; height:1px; background:var(--line); }
+
+  label{
+    display:block; font-size:12.5px; font-weight:600; color:var(--espresso-soft);
+    margin-bottom:5px; margin-top:14px;
+  }
+  label:first-of-type{ margin-top:0; }
+
+  input[type=text], input[type=number]{
+    width:100%; padding:10px 12px; font-family:'Inter',sans-serif; font-size:14.5px;
+    border:1.5px solid var(--line); background:var(--flour); color:var(--espresso);
+    border-radius:0; outline:none;
+  }
+  input:focus{ border-color:var(--cinnamon); }
+  input[type=number]{ font-family:'DM Mono',monospace; }
+
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .row3{ display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; }
+
+  /* Ingredient rows */
+  .ing-list{ margin-top:10px; }
+  .ing-row{
+    display:grid; grid-template-columns:2.2fr 1fr 1fr 1fr auto;
+    gap:8px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line);
+  }
+  .ing-row input{ padding:7px 9px; font-size:13.5px; }
+  .ing-head{
+    display:grid; grid-template-columns:2.2fr 1fr 1fr 1fr auto; gap:8px;
+    font-family:'DM Mono',monospace; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--espresso-soft); padding-bottom:8px;
+    border-bottom:2px solid var(--espresso);
+  }
+  .ing-cost{
+    font-family:'DM Mono',monospace; font-size:13.5px; text-align:right;
+    color:var(--espresso); white-space:nowrap;
+  }
+  .icon-btn{
+    background:none; border:none; cursor:pointer; color:var(--cinnamon);
+    font-size:18px; line-height:1; padding:4px 6px; font-family:'Inter',sans-serif;
+  }
+  .icon-btn:hover{ color:var(--cinnamon-deep); }
+
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13px;
+    padding:10px 16px; border:1.5px solid var(--espresso); background:var(--paper);
+    color:var(--espresso); cursor:pointer; border-radius:0;
+  }
+  .btn:hover{ background:var(--flour-deep); }
+  .btn-add{ margin-top:12px; width:100%; border-style:dashed; color:var(--sage-deep); border-color:var(--sage-deep); }
+  .btn-add:hover{ background:#F2F5EF; }
+  .btn-primary{ background:var(--cinnamon); color:var(--flour); border-color:var(--cinnamon); }
+  .btn-primary:hover{ background:var(--cinnamon-deep); border-color:var(--cinnamon-deep); }
+  .btn-ghost{ border-color:var(--line); color:var(--espresso-soft); }
+
+  /* Receipt / price card */
+  .receipt{
+    background:var(--paper); border:1.5px solid var(--espresso);
+    position:relative; padding:0; overflow:hidden;
+  }
+  .receipt-top{
+    background:var(--espresso); color:var(--flour); padding:18px 24px;
+    font-family:'Fraunces',serif; font-size:20px; font-weight:600;
+  }
+  .receipt-sub{ font-family:'DM Mono',monospace; font-size:11px; color:#D8CCBE; margin-top:3px; }
+  .receipt-body{ padding:22px 24px 10px; }
+  .rline{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-family:'DM Mono',monospace; font-size:13.5px; padding:6px 0;
+    border-bottom:1px dotted var(--line);
+  }
+  .rline .k{ color:var(--espresso-soft); }
+  .rline .v{ color:var(--espresso); }
+  .rline.total{
+    border-top:2px solid var(--espresso); border-bottom:none;
+    margin-top:8px; padding-top:14px; font-size:16px; font-weight:600;
+  }
+  .rline.sell{ color:var(--cinnamon-deep); font-size:19px; font-weight:700; }
+  .rline.perunit{ font-size:12px; color:var(--espresso-soft); border-bottom:none; padding-top:2px;}
+
+  .perf{
+    height:14px; margin:0 0;
+    background:
+      radial-gradient(circle at 8px 7px, var(--flour) 6px, transparent 6.5px) repeat-x;
+    background-size:18px 14px;
+  }
+
+  .margin-control{
+    display:flex; align-items:center; gap:12px; padding:14px 24px;
+    background:var(--flour-deep); border-top:1.5px dashed var(--line);
+  }
+  .margin-control input[type=range]{ flex:1; accent-color:var(--cinnamon); }
+  .margin-val{
+    font-family:'DM Mono',monospace; font-weight:600; font-size:14px;
+    min-width:46px; text-align:right;
+  }
+
+  .receipt-actions{ padding:16px 24px 22px; display:flex; gap:10px; }
+  .receipt-actions .btn{ flex:1; }
+
+  /* Saved recipes list */
+  .saved-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
+  .saved-card{
+    background:var(--paper); border:1.5px solid var(--line); padding:16px 18px;
+    cursor:pointer; transition:border-color .15s;
+  }
+  .saved-card:hover{ border-color:var(--cinnamon); }
+  .saved-card h3{
+    font-family:'Fraunces',serif; font-size:17px; margin:0 0 4px; font-weight:600;
+  }
+  .saved-card .meta{ font-family:'DM Mono',monospace; font-size:11.5px; color:var(--espresso-soft); }
+  .saved-card .price{
+    font-family:'DM Mono',monospace; font-size:15px; color:var(--cinnamon-deep);
+    font-weight:600; margin-top:10px;
+  }
+  .saved-card-actions{ display:flex; gap:8px; margin-top:12px; }
+  .saved-card-actions button{
+    font-size:11px; padding:5px 10px; border:1px solid var(--line); background:none;
+    cursor:pointer; color:var(--espresso-soft); font-family:'Inter',sans-serif;
+  }
+  .saved-card-actions button:hover{ border-color:var(--cinnamon); color:var(--cinnamon-deep); }
+
+  .empty{
+    text-align:center; padding:60px 20px; color:var(--espresso-soft);
+    font-family:'Fraunces',serif; font-style:italic; font-size:16px;
+  }
+
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--espresso); color:var(--flour); padding:12px 22px;
+    font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600;
+    opacity:0; transition:all .25s ease; pointer-events:none; z-index:50;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  ::placeholder{ color:#B9AA98; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>The Batch Book</h1>
+      <span class="tag">recipe costing, for real bakers</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="exportBtn">Export backup</button>
+      <button class="btn btn-ghost" id="importBtn">Import backup</button>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="calc">Calculate</button>
+    <button class="tab" data-tab="saved">Saved Prices</button>
+    <button class="tab" data-tab="book">Recipe Book</button>
+  </div>
+
+  <!-- CALCULATE TAB -->
+  <div id="tab-calc">
+    <div class="grid">
+      <div>
+        <div class="card">
+          <p class="section-label">Recipe details</p>
+          <label>Recipe name</label>
+          <input type="text" id="recipeName" placeholder="e.g. Chocolate Fudge Cake">
+
+          <div class="row2">
+            <div>
+              <label>This recipe makes</label>
+              <input type="number" id="batchYield" min="1" value="12">
+            </div>
+            <div>
+              <label>Unit</label>
+              <input type="text" id="batchUnit" placeholder="cupcakes, slices, kg, cookies…" value="cupcakes">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="section-label">Ingredients</p>
+          <div class="ing-head">
+            <span>Ingredient</span><span>Qty used (g)</span><span>Pack size (g)</span><span>Pack price (Rs)</span><span></span>
+          </div>
+          <div class="ing-list" id="ingList"></div>
+          <button class="btn btn-add" id="addIngBtn">+ Add ingredient</button>
+        </div>
+
+        <div class="card">
+          <p class="section-label">Other costs (optional)</p>
+          <div class="row2">
+            <div>
+              <label>Packaging / box, per batch</label>
+              <input type="number" id="packagingCost" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div>
+              <label>Labor, per batch</label>
+              <input type="number" id="laborCost" min="0" step="0.01" placeholder="0.00">
+            </div>
+          </div>
+          <label>Overhead / utilities, per batch <span style="font-weight:400;color:var(--espresso-soft)">— optional flat add-on</span></label>
+          <input type="number" id="overheadCost" min="0" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+
+      <div>
+        <div class="receipt">
+          <div class="receipt-top">
+            <div id="rTitle">Untitled Recipe</div>
+            <div class="receipt-sub" id="rSub">— cost breakdown —</div>
+          </div>
+          <div class="receipt-body">
+            <div class="rline"><span class="k">Ingredients total</span><span class="v" id="rIng">Rs 0.00</span></div>
+            <div class="rline"><span class="k">Packaging</span><span class="v" id="rPack">Rs 0.00</span></div>
+            <div class="rline"><span class="k">Labor</span><span class="v" id="rLabor">Rs 0.00</span></div>
+            <div class="rline"><span class="k">Overhead</span><span class="v" id="rOver">Rs 0.00</span></div>
+            <div class="rline total"><span class="k">Total batch cost</span><span class="v" id="rTotal">Rs 0.00</span></div>
+            <div class="rline perunit"><span class="k">Cost per unit</span><span class="v" id="rPerUnit">Rs 0.00</span></div>
+          </div>
+          <div class="perf"></div>
+          <div class="margin-control">
+            <label style="margin:0;white-space:nowrap;">Profit margin</label>
+            <input type="range" id="marginSlider" min="0" max="200" value="40">
+            <span class="margin-val" id="marginVal">40%</span>
+          </div>
+          <div class="receipt-body" style="padding-top:16px;">
+            <div class="rline sell"><span class="k">Sell price / unit</span><span class="v" id="rSellUnit">Rs 0.00</span></div>
+            <div class="rline"><span class="k">Sell price / batch</span><span class="v" id="rSellBatch">Rs 0.00</span></div>
+            <div class="rline"><span class="k">Profit / batch</span><span class="v" id="rProfit">Rs 0.00</span></div>
+          </div>
+          <div class="receipt-actions">
+            <button class="btn btn-primary" id="saveBtn">Save this recipe</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAVED TAB -->
+  <div id="tab-saved" style="display:none;">
+    <div class="saved-grid" id="savedGrid"></div>
+  </div>
+
+  <!-- RECIPE BOOK TAB -->
+  <div id="tab-book" style="display:none;">
+
+    <!-- Book list view -->
+    <div id="bookListView">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <p class="section-label" style="margin:0; flex:none;">Your recipes</p>
+        <button class="btn btn-primary" id="newBookRecipeBtn">+ New recipe</button>
+      </div>
+      <div class="saved-grid" id="bookGrid"></div>
+    </div>
+
+    <!-- Book editor view -->
+    <div id="bookEditorView" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <button class="btn btn-ghost" id="backToBookListBtn">← Back to Recipe Book</button>
+        <button class="btn btn-primary" id="saveBookRecipeBtn">Save recipe</button>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1fr;">
+        <div class="card">
+          <p class="section-label">Recipe details</p>
+          <label>Recipe name</label>
+          <input type="text" id="bookName" placeholder="e.g. Fudgy Brownies">
+
+          <div class="row3">
+            <div>
+              <label>Servings / yield</label>
+              <input type="text" id="bookServings" placeholder="e.g. 16 brownies">
+            </div>
+            <div>
+              <label>Prep time</label>
+              <input type="text" id="bookPrepTime" placeholder="e.g. 15 min">
+            </div>
+            <div>
+              <label>Bake time</label>
+              <input type="text" id="bookBakeTime" placeholder="e.g. 30 min">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="section-label">Ingredients</p>
+          <div class="ing-head" style="grid-template-columns:1fr 1fr 2.2fr auto;">
+            <span>Amount</span><span>Unit</span><span>Ingredient</span><span></span>
+          </div>
+          <div class="ing-list" id="bookIngList"></div>
+          <button class="btn btn-add" id="addBookIngBtn">+ Add ingredient</button>
+        </div>
+
+        <div class="card">
+          <p class="section-label">Directions</p>
+          <div id="bookStepsList"></div>
+          <button class="btn btn-add" id="addBookStepBtn">+ Add step</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Book detail (read) view -->
+    <div id="bookDetailView" style="display:none;">
+      <button class="btn btn-ghost" id="backToBookListBtn2" style="margin-bottom:16px;">← Back to Recipe Book</button>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px;">
+          <h2 id="detailName" style="font-family:'Fraunces',serif; font-size:26px; margin:0;"></h2>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-ghost" id="editBookRecipeBtn">Edit</button>
+            <button class="btn btn-ghost" id="deleteBookRecipeBtn">Delete</button>
+          </div>
+        </div>
+        <div class="meta" style="font-family:'DM Mono',monospace; font-size:12.5px; color:var(--espresso-soft); margin-top:8px; display:flex; gap:18px; flex-wrap:wrap;">
+          <span id="detailServings"></span>
+          <span id="detailPrep"></span>
+          <span id="detailBake"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="section-label">Ingredients</p>
+        <ul id="detailIngList" style="list-style:none; padding:0; margin:0; font-family:'DM Mono',monospace; font-size:14px;"></ul>
+      </div>
+
+      <div class="card">
+        <p class="section-label">Directions</p>
+        <ol id="detailStepsList" style="padding-left:20px; margin:0; font-size:14.5px; line-height:1.8;"></ol>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'batchbook_recipes_v1';
+let editingId = null;
+let ingredients = [];
+let idCounter = 1;
+
+function uid(){ return 'ing_' + (idCounter++) + '_' + Math.random().toString(36).slice(2,7); }
+
+function newIngredient(){
+  return { id: uid(), name:'', qty:'', packSize:'', packPrice:'' };
+}
+
+function addIngredient(data){
+  ingredients.push(data || newIngredient());
+  renderIngredients();
+}
+
+function renderIngredients(){
+  const list = document.getElementById('ingList');
+  list.innerHTML = '';
+  ingredients.forEach(ing => {
+    const row = document.createElement('div');
+    row.className = 'ing-row';
+    row.innerHTML = `
+      <input type="text" placeholder="e.g. Flour" value="${escapeHtml(ing.name)}" data-field="name" data-id="${ing.id}">
+      <input type="number" placeholder="250" min="0" step="any" value="${ing.qty}" data-field="qty" data-id="${ing.id}">
+      <input type="number" placeholder="1000" min="0" step="any" value="${ing.packSize}" data-field="packSize" data-id="${ing.id}">
+      <input type="number" placeholder="280" min="0" step="0.01" value="${ing.packPrice}" data-field="packPrice" data-id="${ing.id}">
+      <button class="icon-btn" data-remove="${ing.id}" title="Remove">✕</button>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const id = e.target.dataset.id, field = e.target.dataset.field;
+      const ing = ingredients.find(i => i.id === id);
+      if(ing) ing[field] = e.target.value;
+      calculate();
+    });
+  });
+  list.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      ingredients = ingredients.filter(i => i.id !== e.target.dataset.remove);
+      renderIngredients();
+      calculate();
+    });
+  });
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmt(n){
+  if(!isFinite(n)) n = 0;
+  return 'Rs ' + n.toLocaleString('en-PK', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function calculate(){
+  let ingTotal = 0;
+  ingredients.forEach(ing => {
+    const qty = parseFloat(ing.qty) || 0;
+    const packSize = parseFloat(ing.packSize) || 0;
+    const packPrice = parseFloat(ing.packPrice) || 0;
+    if(packSize > 0){
+      ingTotal += (packPrice / packSize) * qty;
+    }
+  });
+
+  const packaging = parseFloat(document.getElementById('packagingCost').value) || 0;
+  const labor = parseFloat(document.getElementById('laborCost').value) || 0;
+  const overhead = parseFloat(document.getElementById('overheadCost').value) || 0;
+  const batchTotal = ingTotal + packaging + labor + overhead;
+
+  const yieldCount = parseFloat(document.getElementById('batchYield').value) || 1;
+  const perUnit = batchTotal / yieldCount;
+
+  const margin = parseFloat(document.getElementById('marginSlider').value) || 0;
+  const sellPerUnit = perUnit * (1 + margin/100);
+  const sellBatch = sellPerUnit * yieldCount;
+  const profit = sellBatch - batchTotal;
+
+  document.getElementById('rIng').textContent = fmt(ingTotal);
+  document.getElementById('rPack').textContent = fmt(packaging);
+  document.getElementById('rLabor').textContent = fmt(labor);
+  document.getElementById('rOver').textContent = fmt(overhead);
+  document.getElementById('rTotal').textContent = fmt(batchTotal);
+  document.getElementById('rPerUnit').textContent = fmt(perUnit) + ' / ' + (document.getElementById('batchUnit').value || 'unit');
+  document.getElementById('rSellUnit').textContent = fmt(sellPerUnit);
+  document.getElementById('rSellBatch').textContent = fmt(sellBatch);
+  document.getElementById('rProfit').textContent = fmt(profit);
+  document.getElementById('marginVal').textContent = margin + '%';
+
+  const name = document.getElementById('recipeName').value.trim();
+  document.getElementById('rTitle').textContent = name || 'Untitled Recipe';
+  const unit = document.getElementById('batchUnit').value.trim() || 'units';
+  document.getElementById('rSub').textContent = `— makes ${yieldCount} ${unit} —`;
+
+  return { ingTotal, packaging, labor, overhead, batchTotal, perUnit, margin, sellPerUnit, sellBatch, profit, yieldCount };
+}
+
+// wire up static inputs
+['batchYield','batchUnit','packagingCost','laborCost','overheadCost','recipeName'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calculate);
+});
+document.getElementById('marginSlider').addEventListener('input', calculate);
+
+document.getElementById('addIngBtn').addEventListener('click', () => addIngredient());
+
+// ---- Storage ----
+function getSaved(){
+  try{
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  }catch(e){ return []; }
+}
+function setSaved(recipes){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const name = document.getElementById('recipeName').value.trim();
+  if(!name){
+    showToast('Give your recipe a name first');
+    return;
+  }
+  const recipes = getSaved();
+  const record = {
+    id: editingId || ('recipe_' + Date.now()),
+    name,
+    yieldCount: document.getElementById('batchYield').value,
+    unit: document.getElementById('batchUnit').value,
+    ingredients: JSON.parse(JSON.stringify(ingredients)),
+    packagingCost: document.getElementById('packagingCost').value,
+    laborCost: document.getElementById('laborCost').value,
+    overheadCost: document.getElementById('overheadCost').value,
+    margin: document.getElementById('marginSlider').value,
+    savedAt: new Date().toISOString()
+  };
+  const idx = recipes.findIndex(r => r.id === record.id);
+  if(idx >= 0) recipes[idx] = record; else recipes.push(record);
+  setSaved(recipes);
+  editingId = record.id;
+  showToast('Saved "' + name + '"');
+  renderSavedGrid();
+});
+
+function loadRecipeIntoForm(r){
+  editingId = r.id;
+  document.getElementById('recipeName').value = r.name;
+  document.getElementById('batchYield').value = r.yieldCount;
+  document.getElementById('batchUnit').value = r.unit;
+  document.getElementById('packagingCost').value = r.packagingCost;
+  document.getElementById('laborCost').value = r.laborCost;
+  document.getElementById('overheadCost').value = r.overheadCost;
+  document.getElementById('marginSlider').value = r.margin;
+  ingredients = JSON.parse(JSON.stringify(r.ingredients));
+  renderIngredients();
+  calculate();
+  switchTab('calc');
+}
+
+function renderSavedGrid(){
+  const grid = document.getElementById('savedGrid');
+  const recipes = getSaved().sort((a,b)=> new Date(b.savedAt) - new Date(a.savedAt));
+  if(recipes.length === 0){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">No recipes saved yet.<br>Calculate one and hit "Save this recipe."</div>`;
+    return;
+  }
+  grid.innerHTML = '';
+  recipes.forEach(r => {
+    let ingTotal = 0;
+    r.ingredients.forEach(ing => {
+      const qty = parseFloat(ing.qty)||0, ps = parseFloat(ing.packSize)||0, pp = parseFloat(ing.packPrice)||0;
+      if(ps>0) ingTotal += (pp/ps)*qty;
+    });
+    const batchTotal = ingTotal + (parseFloat(r.packagingCost)||0) + (parseFloat(r.laborCost)||0) + (parseFloat(r.overheadCost)||0);
+    const yieldCount = parseFloat(r.yieldCount)||1;
+    const perUnit = batchTotal/yieldCount;
+    const sellUnit = perUnit * (1 + (parseFloat(r.margin)||0)/100);
+
+    const card = document.createElement('div');
+    card.className = 'saved-card';
+    card.innerHTML = `
+      <h3>${escapeHtml(r.name)}</h3>
+      <div class="meta">makes ${r.yieldCount} ${escapeHtml(r.unit||'units')} · ${r.ingredients.length} ingredients</div>
+      <div class="price">${fmt(sellUnit)} / ${escapeHtml(r.unit||'unit')}</div>
+      <div class="saved-card-actions">
+        <button data-open="${r.id}">Open</button>
+        <button data-del="${r.id}">Delete</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll('[data-open]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      const r = getSaved().find(x=>x.id===e.target.dataset.open);
+      if(r) loadRecipeIntoForm(r);
+    });
+  });
+  grid.querySelectorAll('[data-del]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!confirm('Delete this recipe?')) return;
+      const recipes = getSaved().filter(x=>x.id!==e.target.dataset.del);
+      setSaved(recipes);
+      renderSavedGrid();
+    });
+  });
+}
+
+// ============ RECIPE BOOK (separate from price calculator) ============
+const BOOK_STORAGE_KEY = 'batchbook_original_recipes_v1';
+let bookIngredients = [];
+let bookSteps = [];
+let bookEditingId = null;
+let bookViewingId = null;
+
+function getBookRecipes(){
+  try{ return JSON.parse(localStorage.getItem(BOOK_STORAGE_KEY)) || []; }
+  catch(e){ return []; }
+}
+function setBookRecipes(recipes){
+  localStorage.setItem(BOOK_STORAGE_KEY, JSON.stringify(recipes));
+}
+
+function newBookIngredient(){ return { id: uid(), amount:'', unit:'', name:'' }; }
+function newBookStep(){ return { id: uid(), text:'' }; }
+
+function renderBookIngredients(){
+  const list = document.getElementById('bookIngList');
+  list.innerHTML = '';
+  bookIngredients.forEach(ing => {
+    const row = document.createElement('div');
+    row.className = 'ing-row';
+    row.style.gridTemplateColumns = '1fr 1fr 2.2fr auto';
+    row.innerHTML = `
+      <input type="text" placeholder="2" value="${escapeHtml(ing.amount)}" data-field="amount" data-id="${ing.id}">
+      <input type="text" placeholder="g" value="${escapeHtml(ing.unit)}" data-field="unit" data-id="${ing.id}">
+      <input type="text" placeholder="flour" value="${escapeHtml(ing.name)}" data-field="name" data-id="${ing.id}">
+      <button class="icon-btn" data-remove-bing="${ing.id}" title="Remove">✕</button>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const id = e.target.dataset.id, field = e.target.dataset.field;
+      const ing = bookIngredients.find(i=>i.id===id);
+      if(ing) ing[field] = e.target.value;
+    });
+  });
+  list.querySelectorAll('[data-remove-bing]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      bookIngredients = bookIngredients.filter(i=>i.id!==e.target.dataset.removeBing);
+      renderBookIngredients();
+    });
+  });
+}
+
+function renderBookSteps(){
+  const list = document.getElementById('bookStepsList');
+  list.innerHTML = '';
+  bookSteps.forEach((step, idx) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--line);';
+    row.innerHTML = `
+      <span style="font-family:'DM Mono',monospace; font-size:13px; color:var(--sage-deep); min-width:22px; padding-top:9px;">${idx+1}.</span>
+      <textarea rows="2" placeholder="Describe this step…" data-field="text" data-id="${step.id}"
+        style="flex:1; padding:8px 10px; font-family:'Inter',sans-serif; font-size:14px; border:1.5px solid var(--line); background:var(--flour); color:var(--espresso); resize:vertical;">${escapeHtml(step.text)}</textarea>
+      <button class="icon-btn" data-remove-step="${step.id}" title="Remove" style="padding-top:8px;">✕</button>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('textarea').forEach(ta=>{
+    ta.addEventListener('input', e=>{
+      const id = e.target.dataset.id;
+      const step = bookSteps.find(s=>s.id===id);
+      if(step) step.text = e.target.value;
+    });
+  });
+  list.querySelectorAll('[data-remove-step]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      bookSteps = bookSteps.filter(s=>s.id!==e.target.dataset.removeStep);
+      renderBookSteps();
+    });
+  });
+}
+
+document.getElementById('addBookIngBtn').addEventListener('click', ()=>{
+  bookIngredients.push(newBookIngredient());
+  renderBookIngredients();
+});
+document.getElementById('addBookStepBtn').addEventListener('click', ()=>{
+  bookSteps.push(newBookStep());
+  renderBookSteps();
+});
+
+function showBookView(view){
+  document.getElementById('bookListView').style.display = view==='list' ? '' : 'none';
+  document.getElementById('bookEditorView').style.display = view==='editor' ? '' : 'none';
+  document.getElementById('bookDetailView').style.display = view==='detail' ? '' : 'none';
+}
+
+function openNewBookRecipe(){
+  bookEditingId = null;
+  document.getElementById('bookName').value = '';
+  document.getElementById('bookServings').value = '';
+  document.getElementById('bookPrepTime').value = '';
+  document.getElementById('bookBakeTime').value = '';
+  bookIngredients = [newBookIngredient()];
+  bookSteps = [newBookStep()];
+  renderBookIngredients();
+  renderBookSteps();
+  showBookView('editor');
+}
+
+function openEditBookRecipe(r){
+  bookEditingId = r.id;
+  document.getElementById('bookName').value = r.name;
+  document.getElementById('bookServings').value = r.servings;
+  document.getElementById('bookPrepTime').value = r.prepTime;
+  document.getElementById('bookBakeTime').value = r.bakeTime;
+  bookIngredients = JSON.parse(JSON.stringify(r.ingredients.length ? r.ingredients : [newBookIngredient()]));
+  bookSteps = JSON.parse(JSON.stringify(r.steps.length ? r.steps : [newBookStep()]));
+  renderBookIngredients();
+  renderBookSteps();
+  showBookView('editor');
+}
+
+function openBookDetail(r){
+  bookViewingId = r.id;
+  document.getElementById('detailName').textContent = r.name;
+  document.getElementById('detailServings').textContent = r.servings ? ('Makes ' + r.servings) : '';
+  document.getElementById('detailPrep').textContent = r.prepTime ? ('Prep: ' + r.prepTime) : '';
+  document.getElementById('detailBake').textContent = r.bakeTime ? ('Bake: ' + r.bakeTime) : '';
+
+  const ingList = document.getElementById('detailIngList');
+  ingList.innerHTML = '';
+  r.ingredients.forEach(ing=>{
+    if(!ing.name && !ing.amount) return;
+    const li = document.createElement('li');
+    li.style.cssText = 'padding:7px 0; border-bottom:1px dotted var(--line);';
+    li.textContent = [ing.amount, ing.unit, ing.name].filter(Boolean).join(' ');
+    ingList.appendChild(li);
+  });
+
+  const stepsList = document.getElementById('detailStepsList');
+  stepsList.innerHTML = '';
+  r.steps.forEach(step=>{
+    if(!step.text) return;
+    const li = document.createElement('li');
+    li.style.marginBottom = '10px';
+    li.textContent = step.text;
+    stepsList.appendChild(li);
+  });
+
+  showBookView('detail');
+}
+
+document.getElementById('newBookRecipeBtn').addEventListener('click', openNewBookRecipe);
+document.getElementById('backToBookListBtn').addEventListener('click', ()=>{ showBookView('list'); renderBookGrid(); });
+document.getElementById('backToBookListBtn2').addEventListener('click', ()=>{ showBookView('list'); renderBookGrid(); });
+
+document.getElementById('saveBookRecipeBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('bookName').value.trim();
+  if(!name){ showToast('Give your recipe a name first'); return; }
+  const recipes = getBookRecipes();
+  const record = {
+    id: bookEditingId || ('book_' + Date.now()),
+    name,
+    servings: document.getElementById('bookServings').value.trim(),
+    prepTime: document.getElementById('bookPrepTime').value.trim(),
+    bakeTime: document.getElementById('bookBakeTime').value.trim(),
+    ingredients: JSON.parse(JSON.stringify(bookIngredients)),
+    steps: JSON.parse(JSON.stringify(bookSteps)),
+    savedAt: new Date().toISOString()
+  };
+  const idx = recipes.findIndex(r=>r.id===record.id);
+  if(idx>=0) recipes[idx]=record; else recipes.push(record);
+  setBookRecipes(recipes);
+  showToast('Saved "' + name + '"');
+  showBookView('list');
+  renderBookGrid();
+});
+
+document.getElementById('editBookRecipeBtn').addEventListener('click', ()=>{
+  const r = getBookRecipes().find(x=>x.id===bookViewingId);
+  if(r) openEditBookRecipe(r);
+});
+document.getElementById('deleteBookRecipeBtn').addEventListener('click', ()=>{
+  if(!confirm('Delete this recipe?')) return;
+  const recipes = getBookRecipes().filter(x=>x.id!==bookViewingId);
+  setBookRecipes(recipes);
+  showToast('Recipe deleted');
+  showBookView('list');
+  renderBookGrid();
+});
+
+function renderBookGrid(){
+  const grid = document.getElementById('bookGrid');
+  const recipes = getBookRecipes().sort((a,b)=> new Date(b.savedAt) - new Date(a.savedAt));
+  if(recipes.length===0){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">No recipes in your book yet.<br>Click "+ New recipe" to add your first one.</div>`;
+    return;
+  }
+  grid.innerHTML = '';
+  recipes.forEach(r=>{
+    const card = document.createElement('div');
+    card.className = 'saved-card';
+    card.innerHTML = `
+      <h3>${escapeHtml(r.name)}</h3>
+      <div class="meta">${r.servings ? escapeHtml(r.servings) + ' · ' : ''}${r.ingredients.length} ingredients · ${r.steps.length} steps</div>
+      <div class="meta" style="margin-top:6px;">${r.prepTime ? 'Prep ' + escapeHtml(r.prepTime) : ''}${r.prepTime && r.bakeTime ? ' · ' : ''}${r.bakeTime ? 'Bake ' + escapeHtml(r.bakeTime) : ''}</div>
+      <div class="saved-card-actions">
+        <button data-view-book="${r.id}">View</button>
+        <button data-del-book="${r.id}">Delete</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll('[data-view-book]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const r = getBookRecipes().find(x=>x.id===e.target.dataset.viewBook);
+      if(r) openBookDetail(r);
+    });
+  });
+  grid.querySelectorAll('[data-del-book]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!confirm('Delete this recipe?')) return;
+      const recipes = getBookRecipes().filter(x=>x.id!==e.target.dataset.delBook);
+      setBookRecipes(recipes);
+      renderBookGrid();
+    });
+  });
+}
+
+// ---- Tabs ----
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  document.getElementById('tab-calc').style.display = tab==='calc' ? '' : 'none';
+  document.getElementById('tab-saved').style.display = tab==='saved' ? '' : 'none';
+  document.getElementById('tab-book').style.display = tab==='book' ? '' : 'none';
+  if(tab==='saved') renderSavedGrid();
+  if(tab==='book'){ showBookView('list'); renderBookGrid(); }
+}
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>switchTab(t.dataset.tab));
+});
+
+// ---- Export / Import backup ----
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const data = { priceRecipes: getSaved(), bookRecipes: getBookRecipes() };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'batchbook-recipes-backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup downloaded');
+});
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const incoming = JSON.parse(ev.target.result);
+      let count = 0;
+
+      if(Array.isArray(incoming)){
+        // legacy backup format: price recipes only
+        const merged = [...getSaved()];
+        incoming.forEach(r=>{ if(!merged.find(m=>m.id===r.id)){ merged.push(r); count++; } });
+        setSaved(merged);
+      } else if(incoming && typeof incoming === 'object'){
+        if(Array.isArray(incoming.priceRecipes)){
+          const merged = [...getSaved()];
+          incoming.priceRecipes.forEach(r=>{ if(!merged.find(m=>m.id===r.id)){ merged.push(r); count++; } });
+          setSaved(merged);
+        }
+        if(Array.isArray(incoming.bookRecipes)){
+          const merged = [...getBookRecipes()];
+          incoming.bookRecipes.forEach(r=>{ if(!merged.find(m=>m.id===r.id)){ merged.push(r); count++; } });
+          setBookRecipes(merged);
+        }
+      } else {
+        throw new Error('bad format');
+      }
+
+      showToast('Imported ' + count + ' recipe(s)');
+      renderSavedGrid();
+      renderBookGrid();
+    }catch(err){
+      showToast('Could not read that file');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ---- Init ----
+addIngredient({id:uid(), name:'Flour', qty:'250', packSize:'1000', packPrice:'220'});
+addIngredient({id:uid(), name:'Sugar', qty:'150', packSize:'1000', packPrice:'180'});
+addIngredient({id:uid(), name:'Butter', qty:'100', packSize:'250', packPrice:'450'});
+calculate();
+renderSavedGrid();
+renderBookGrid();
+</script>
+</body>
+</html>
